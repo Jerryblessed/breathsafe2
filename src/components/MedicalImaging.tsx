@@ -1,7 +1,7 @@
-// Updated MedicalImaging.tsx with full UI restored
+// Updated MedicalImaging.tsx with backend-only classification and improved UI
 import React, { useState, useRef } from 'react';
 import {
-  Upload, Camera, Brain, AlertTriangle, CheckCircle, Loader, FileImage, Download, Share2
+  Upload, Brain, Loader
 } from 'lucide-react';
 
 interface ClassificationResult {
@@ -11,7 +11,6 @@ interface ClassificationResult {
   recommendations: string[];
   timestamp: Date;
   explanation?: string;
-  simulated?: boolean;
 }
 
 const MedicalImaging: React.FC = () => {
@@ -91,24 +90,8 @@ const MedicalImaging: React.FC = () => {
 
       setResult(classification);
     } catch (error) {
-      console.warn('Backend unavailable, using mock data.');
-      const mockPredictions = [
-        { class: 'Colon Benign', confidence: 0.92, risk: 'low' },
-        { class: 'Lung Adenocarcinoma', confidence: 0.87, risk: 'critical' },
-        { class: 'Colon Adenocarcinoma', confidence: 0.78, risk: 'high' },
-        { class: 'Lung Benign', confidence: 0.95, risk: 'low' },
-        { class: 'Lung Squamous Cell Carcinoma', confidence: 0.83, risk: 'critical' },
-      ];
-      const random = mockPredictions[Math.floor(Math.random() * mockPredictions.length)];
-      setResult({
-        prediction: random.class,
-        confidence: random.confidence,
-        riskLevel: random.risk as ClassificationResult['riskLevel'],
-        recommendations: getRecommendations(random.class),
-        timestamp: new Date(),
-        explanation: 'This is a simulated result due to backend timeout.',
-        simulated: true
-      });
+      console.error('Error:', error);
+      alert('Unable to analyze image at the moment. Please try again later.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -128,9 +111,11 @@ const MedicalImaging: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Histopathology Image Analyzer</h1>
-      <div className="mb-4">
+    <div className="max-w-4xl mx-auto px-6 py-8">
+      <h1 className="text-3xl font-bold text-center text-blue-700 mb-6">Histopathology Image Analyzer</h1>
+
+      <div className="mb-6 border-2 border-dashed border-gray-300 rounded-xl p-8 bg-white shadow-sm text-center cursor-pointer hover:bg-blue-50 transition"
+           onClick={() => fileInputRef.current?.click()}>
         <input
           type="file"
           accept="image/*"
@@ -138,51 +123,55 @@ const MedicalImaging: React.FC = () => {
           onChange={handleImageUpload}
           className="hidden"
         />
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          className="cursor-pointer border-2 border-dashed border-gray-300 rounded-lg p-6 text-center"
-        >
-          {imagePreview ? (
-            <img src={imagePreview} alt="preview" className="mx-auto max-h-64" />
-          ) : (
-            <div>
-              <Upload className="mx-auto mb-2" />
-              <p>Click to upload histopathology image</p>
-            </div>
-          )}
-        </div>
+        {imagePreview ? (
+          <img src={imagePreview} alt="preview" className="mx-auto max-h-64 rounded" />
+        ) : (
+          <div className="text-gray-500">
+            <Upload className="mx-auto w-10 h-10 mb-3" />
+            <p className="text-lg font-medium">Click to upload a histopathology image</p>
+            <p className="text-sm">Supported formats: PNG, JPG, JPEG</p>
+          </div>
+        )}
       </div>
 
-      <button
-        onClick={classifyImage}
-        disabled={!selectedImage || isAnalyzing}
-        className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
-      >
-        {isAnalyzing ? 'Analyzing...' : 'Analyze Image'}
-      </button>
+      <div className="text-center">
+        <button
+          onClick={classifyImage}
+          disabled={!selectedImage || isAnalyzing}
+          className="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold disabled:opacity-50"
+        >
+          {isAnalyzing ? <Loader className="animate-spin mr-2 w-4 h-4" /> : <Brain className="mr-2 w-4 h-4" />}
+          {isAnalyzing ? 'Analyzing...' : 'Analyze Image'}
+        </button>
+      </div>
 
       {result && (
-        <div className="mt-6 p-4 border rounded bg-white shadow">
-          <h2 className="text-xl font-semibold mb-2">Prediction Result</h2>
-          <p><strong>Prediction:</strong> {result.prediction}</p>
-          <p><strong>Confidence:</strong> {(result.confidence * 100).toFixed(1)}%</p>
-          <p><strong>Risk Level:</strong> {result.riskLevel}</p>
-          <p className="mt-4 font-medium">Recommendations:</p>
-          <ul className="list-disc list-inside text-sm text-gray-700">
-            {result.recommendations.map((rec, idx) => (
-              <li key={idx}>{rec}</li>
-            ))}
-          </ul>
+        <div className="mt-8 bg-white p-6 rounded-xl shadow-md">
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">Analysis Result</h2>
+          <div className="space-y-2">
+            <p><strong>Prediction:</strong> {result.prediction}</p>
+            <p><strong>Confidence:</strong> {(result.confidence * 100).toFixed(1)}%</p>
+            <p><strong>Risk Level:</strong> <span className={`capitalize font-semibold ${
+              result.riskLevel === 'low' ? 'text-green-600' :
+              result.riskLevel === 'moderate' ? 'text-yellow-600' :
+              result.riskLevel === 'high' ? 'text-orange-600' : 'text-red-600'
+            }`}>{result.riskLevel}</span></p>
 
-          {result.simulated && (
-            <p className="mt-2 text-yellow-600 text-sm">⚠️ This is a simulated result. Real backend was unavailable.</p>
-          )}
+            {result.explanation && (
+              <div className="bg-gray-50 border-l-4 border-blue-300 p-4 rounded">
+                <p className="text-sm text-gray-700 whitespace-pre-line">{result.explanation}</p>
+              </div>
+            )}
 
-          {result.explanation && (
-            <div className="mt-4 p-3 border rounded bg-gray-50">
-              <p className="text-sm text-gray-700 whitespace-pre-line">{result.explanation}</p>
+            <div>
+              <p className="font-medium mt-4">Recommendations:</p>
+              <ul className="list-disc list-inside text-sm text-gray-700">
+                {result.recommendations.map((rec, idx) => (
+                  <li key={idx}>{rec}</li>
+                ))}
+              </ul>
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>
