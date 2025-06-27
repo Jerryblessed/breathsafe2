@@ -1,4 +1,4 @@
-// Updated MedicalImaging.tsx
+// Updated MedicalImaging.tsx with full UI restored
 import React, { useState, useRef } from 'react';
 import {
   Upload, Camera, Brain, AlertTriangle, CheckCircle, Loader, FileImage, Download, Share2
@@ -128,18 +128,61 @@ const MedicalImaging: React.FC = () => {
   };
 
   return (
-    <div>
-      {/* UI omitted for brevity - reuse your UI and integrate result and classifyImage updates */}
-      {result && result.simulated && (
-        <div className="text-yellow-600 mt-2 text-sm">
-          ⚠️ This is a simulated result. Real backend was unavailable.
+    <div className="max-w-4xl mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Histopathology Image Analyzer</h1>
+      <div className="mb-4">
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          onChange={handleImageUpload}
+          className="hidden"
+        />
+        <div
+          onClick={() => fileInputRef.current?.click()}
+          className="cursor-pointer border-2 border-dashed border-gray-300 rounded-lg p-6 text-center"
+        >
+          {imagePreview ? (
+            <img src={imagePreview} alt="preview" className="mx-auto max-h-64" />
+          ) : (
+            <div>
+              <Upload className="mx-auto mb-2" />
+              <p>Click to upload histopathology image</p>
+            </div>
+          )}
         </div>
-      )}
-      {result?.explanation && (
-        <div className="mt-4 p-4 border rounded bg-gray-50">
-          <p className="text-sm text-gray-700 whitespace-pre-line">
-            {result.explanation}
-          </p>
+      </div>
+
+      <button
+        onClick={classifyImage}
+        disabled={!selectedImage || isAnalyzing}
+        className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-50"
+      >
+        {isAnalyzing ? 'Analyzing...' : 'Analyze Image'}
+      </button>
+
+      {result && (
+        <div className="mt-6 p-4 border rounded bg-white shadow">
+          <h2 className="text-xl font-semibold mb-2">Prediction Result</h2>
+          <p><strong>Prediction:</strong> {result.prediction}</p>
+          <p><strong>Confidence:</strong> {(result.confidence * 100).toFixed(1)}%</p>
+          <p><strong>Risk Level:</strong> {result.riskLevel}</p>
+          <p className="mt-4 font-medium">Recommendations:</p>
+          <ul className="list-disc list-inside text-sm text-gray-700">
+            {result.recommendations.map((rec, idx) => (
+              <li key={idx}>{rec}</li>
+            ))}
+          </ul>
+
+          {result.simulated && (
+            <p className="mt-2 text-yellow-600 text-sm">⚠️ This is a simulated result. Real backend was unavailable.</p>
+          )}
+
+          {result.explanation && (
+            <div className="mt-4 p-3 border rounded bg-gray-50">
+              <p className="text-sm text-gray-700 whitespace-pre-line">{result.explanation}</p>
+            </div>
+          )}
         </div>
       )}
     </div>
