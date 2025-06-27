@@ -23,11 +23,36 @@ const MedicalImaging: React.FC = () => {
 
   const getRecommendations = (prediction: string): string[] => {
     const baseRecommendations = {
-      'Colon Adenocarcinoma': [...],
-      'Colon Benign': [...],
-      'Lung Adenocarcinoma': [...],
-      'Lung Benign': [...],
-      'Lung Squamous Cell Carcinoma': [...],
+      'Colon Adenocarcinoma': [
+        'Immediate consultation with an oncologist required',
+        'Schedule comprehensive staging workup',
+        'Consider genetic counseling for family members',
+        'Discuss treatment options including surgery and chemotherapy'
+      ],
+      'Colon Benign': [
+        'Continue regular screening as recommended',
+        'Maintain healthy diet rich in fiber',
+        'Monitor for any changes in bowel habits',
+        'Follow up with gastroenterologist as scheduled'
+      ],
+      'Lung Adenocarcinoma': [
+        'Urgent referral to thoracic oncology team',
+        'Complete staging with CT and PET scans',
+        'Molecular testing for targeted therapy options',
+        'Smoking cessation support if applicable'
+      ],
+      'Lung Benign': [
+        'Regular follow-up imaging as recommended',
+        'Avoid smoking and secondhand smoke exposure',
+        'Monitor for respiratory symptoms',
+        'Maintain good respiratory hygiene'
+      ],
+      'Lung Squamous Cell Carcinoma': [
+        'Immediate thoracic surgery consultation',
+        'Complete staging and biomarker testing',
+        'Multidisciplinary team evaluation',
+        'Consider clinical trial eligibility'
+      ]
     };
     return baseRecommendations[prediction as keyof typeof baseRecommendations] || ['Consult a doctor.'];
   };
